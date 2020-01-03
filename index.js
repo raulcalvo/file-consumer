@@ -3,7 +3,7 @@ const chokidar = require('chokidar');
 const fs = require('fs');
 const path = require('path');
 
-module.exports = class file-consumer {
+module.exports = class fileconsumer {
     constructor(inputFolder, outputFolder, watch, afterProcessPolicy, processFunction) {
         this.DO_NOTHING = 0;
         this.REMOVE_AFTER_PROCESS = 1;
