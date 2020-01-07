@@ -1,19 +1,18 @@
 {
   "name": "file-consumer",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "Module for processing files",
   "license": "MIT",
   "repository": "raulcalvo/file-consumer",
   "main": "index.js",
   "keywords": [
-    "google",
-    "drive",
-    "google drive",
-    "wrapper"
+    "file",
+    "consumer"
   ],
   "dependencies": {
     "chokidar": "^3.3.1",
     "fs": "0.0.1-security",
-    "path": "^0.12.7"
+    "path": "^0.12.7",
+    "merge-json": "0.1.0-b.3"
   }
 }
