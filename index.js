@@ -1,13 +1,23 @@
 'use strict';
-const chokidar = require('chokidar');
-const fs = require('fs');
-const path = require('path');
-const mergeJSON = require('merge-json');
+const requirer = require("../extended-requirer/index.js");
+const r = new requirer(__dirname);
+
+const chokidar = r.require('chokidar');
+const fs = r.require('fs');
+const path = r.require('path');
+const mergeJSON = r.require('merge-json');
+const configLoader = r.require('config-loader-manager');
+
+function getModuleName(){
+    return __dirname.split(path.sep).slice(-1)[0];
+}
 
 module.exports = class fileconsumer {
     constructor(config) {
-        var defaultConfig = {
-            consumer: {
+        
+        this._logger = console;
+        var defaultConfig = {};
+        defaultConfig[getModuleName()] = {
                 inputFolder : "./input",                        // Input folder. New files on that folder will be processed
                 outputFolder : "./output",                      // Processed files and/or result files will be written to that folder
                 watch : true,                                   // Initial file scan status. If false file consumer will initialize stopped.
@@ -16,20 +26,28 @@ module.exports = class fileconsumer {
                                                                 // 1 - Remove input file after process
                                                                 // 2 - Move to output folder
                 processFunction : this.defaultProcessFunction,  // Function to be executed for each file. Parameter is file name.
-            },
-            logger : console,                                   // Logger. Have to be an object that have a .log method.
         };
-
-        this._c = mergeJSON.merge(defaultConfig, config);
+        this._config = configLoader.load(__dirname, config, defaultConfig);
 
         this.DO_NOTHING = 0;
         this.REMOVE_AFTER_PROCESS = 1;
         this.MOVE_AFTER_PROCESS = 2;
 
-        if (this._c.consumer.watch){
-            this._c.consumer.watch = false;
+        if (this.getConfig("watch")){
+            this.setConfig("watch",false);
             this.startWatching();
         }
+    }
+
+    getConfig(key){
+        return this._config[__dirname.split(path.sep).slice(-1)[0]][key];
+    }
+    setConfig(key,value){
+        this._config[__dirname.split(path.sep).slice(-1)[0]][key] = value;
+    }
+
+    setLogger(logger){
+        this._logger = logger;
     }
 
     defaultProcessFunction(file){
@@ -37,11 +55,11 @@ module.exports = class fileconsumer {
     }
 
     startWatching() {
-        if (this._c.consumer.watch) {
+        if (this.getConfig("watch")) {
             return false;
         }
         else {
-            this._watcher = chokidar.watch(this._c.consumer.inputFolder, {
+            this._watcher = chokidar.watch(this.getConfig("inputFolder"), {
                 awaitWriteFinish: {
                   stabilityThreshold: 2000,
                   pollInterval: 100
@@ -50,50 +68,50 @@ module.exports = class fileconsumer {
             this._watcher.on('add', (event, p) => {
                 this.processEvent(event);
             });
-            this._c.consumer.watch = true;
+            this.setConfig("watch", true);
             return true;
         }
     }
 
     getOutputFile(file){
         const fileName = path.basename(file);
-        const outFile = this._c.consumer.outputFolder + "/" + fileName;
+        const outFile = path.join(this.getConfig("outputFolder"), fileName);
         return outFile;
     }
 
     getOutputFileWithNoExtension(file){
         const fileName = path.basename(file, path.extname(file));
-        const outFile = this._c.consumer.outputFolder + "/" + fileName;
+        const outFile = path.join( this.getConfig("outputFolder"), fileName);
         return outFile;
     }
 
     processEvent(file){
-        return this._c.consumer.processFunction(file).then( (out) => {
-            this._c.logger.log("File processed: " + out);
-            if (this._c.consumer.afterProcessPolicy == this.REMOVE_AFTER_PROCESS)
+        return this.getConfig("processFunction")(file, this.getConfig("outputFolder")).then( (out) => {
+            this._logger.log("File processed: " + out);
+            if (this.getConfig("afterProcessPolicy") == this.REMOVE_AFTER_PROCESS)
                 fs.unlinkSync(file);
-            if (this._c.consumer.afterProcessPolicy == this.MOVE_AFTER_PROCESS){
+            if (this.getConfig("afterProcessPolicy") == this.MOVE_AFTER_PROCESS){
                 const outFile = this.getOutputFile(file);
                 fs.copyFileSync(file, outFile);
                 fs.unlinkSync(file);
             }
         }).catch( (err) => {
-            this._c.logger.log("Error processing file [" + file + "] => " + err);
+            this._logger.log("Error processing file [" + file + "] => " + err);
         });
     }
 
     stopWatching() {
-        if (!this._c.consumer.watch) {
+        if (!this.getConfig("watch")) {
             return false;
         } else {
             this._watcher.close().then(() => {
-                this._c.consumer.watch = false;
+                this.setConfig("watch", false);
             });
             return true;
         }
     }
 
     getStatus(){
-        return this._c.consumer.watch;
+        return this.getConfig("watch");
     }
 }
