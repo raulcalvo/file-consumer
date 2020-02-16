@@ -1,6 +1,6 @@
 {
   "name": "file-consumer",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Module for processing files",
   "license": "MIT",
   "repository": "raulcalvo/file-consumer",
