@@ -9,10 +9,16 @@
     "file",
     "consumer"
   ],
+  "test": {
+    "start": "node test.js"
+  },
   "dependencies": {
     "chokidar": "^3.3.1",
+    "config-loader-manager": "^1.0.2",
+    "extended-requirer": "^1.0.2",
     "fs": "0.0.1-security",
-    "path": "^0.12.7",
-    "merge-json": "0.1.0-b.3"
+    "logger-to-memory": "^1.0.2",
+    "merge-json": "0.1.0-b.3",
+    "path": "^0.12.7"
   }
 }
